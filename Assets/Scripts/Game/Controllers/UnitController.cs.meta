@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 3500086f104e417cbc7e0e232916cbc3
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - onTapSound: {fileID: 11400000, guid: e1e30cc9b73311c469fbac53081b4fea, type: 2}
+  - spriteRenderer: {instanceID: 0}
+  - boxCollider: {instanceID: 0}
+  - unitCollider: {instanceID: 0}
+  - mergeable: {instanceID: 0}
+  - animator: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
