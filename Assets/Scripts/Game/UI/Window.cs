@@ -1,10 +1,10 @@
 ﻿using System;
-using Game.Services;
+using Core.Services;
 using Plugins.WindowsManager;
 using UnityEngine;
 using Zenject;
 
-namespace Game.Ui
+namespace Game.UI
 {
 	public class Window<TDerived> : Window where TDerived : Window<TDerived>
 	{
@@ -67,12 +67,12 @@ namespace Game.Ui
 
 		protected void OnWindowOpen()
 		{
-			_optionService.groupCanMove.Value = false;
+			_optionService.canMerge.Value = false;
 		}
 
 		protected void OnWindowClose()
 		{
-			_optionService.groupCanMove.Value = true;
+			_optionService.canMerge.Value = true;
 		}
 
 		public override event EventHandler<ActivatableStateChangedEventArgs> ActivatableStateChangedEvent;

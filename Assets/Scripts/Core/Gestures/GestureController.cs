@@ -14,6 +14,9 @@ namespace Core.Gestures
     public class GestureController : MonoBehaviour
     {
         [SerializeField]
+        private UnityEngine.Camera camera;
+
+        [SerializeField]
         private PointerInputManager inputManager;
 
         // Maximum duration of a press before it can no longer be considered a tap.
@@ -39,6 +42,11 @@ namespace Core.Gestures
         [SerializeField]
         private float swipeDirectionSamenessThreshold = 0.6f;
 
+        [SerializeField]
+        private float updateDelay = 0.08f;
+
+        private float _updateDelayTimer;
+
         [Header("Debug"), SerializeField]
         private Text label;
 
@@ -48,12 +56,17 @@ namespace Core.Gestures
         /// <summary>
         /// Event fired when the user presses on the screen.
         /// </summary>
-        public new event Action<SwipeInput> Pressed;
+        public event Action<SwipeInput> Pressed;
 
         /// <summary>
         /// Event fired for every motion (possibly multiple times a frame) of a potential swipe gesture.
         /// </summary>
         public event Action<SwipeInput> PotentiallySwiped;
+        
+        /// <summary>
+        /// Event fired for every motion (possibly multiple times a frame) of a drag gesture.
+        /// </summary>
+        public event Action<DragInput> Dragged;
 
         /// <summary>
         /// Event fired when a user performs a swipe gesture.
@@ -65,11 +78,37 @@ namespace Core.Gestures
         /// </summary>
         public event Action<TapInput> Tapped;
 
+        public event Action<SwipeInput> DragStarted;
+        /// <summary>
+        /// Event fired when a user performs a drag gesture, on releasing.
+        /// </summary>
+        public event Action<DragInput> DragFinished;
+
         protected virtual void Awake()
         {
             inputManager.Pressed += OnPressed;
             inputManager.Dragged += OnDragged;
             inputManager.Released += OnReleased;
+        }
+
+        protected void Update()
+        {
+            if(activeGestures.Count > 0 && _updateDelayTimer > updateDelay)
+            {
+                float time = Time.realtimeSinceStartup;
+
+                foreach (ActiveGesture gesture in activeGestures.Values)
+                {
+                    if(!gesture.IsDragged && time > gesture.StartTime + maxTapDuration)
+                    {
+                        OnDragStarted(gesture, time);
+                    }
+                }
+
+                _updateDelayTimer = 0;
+            }
+
+            _updateDelayTimer += Time.deltaTime;
         }
 
         /// <summary>
@@ -84,11 +123,14 @@ namespace Core.Gestures
 
         /// <summary>
         /// Checks whether a given active gesture will be a valid tap.
+        /// 
+        /// TODO:  BUG FIXED! IN CASE OF UPDATING InputSystem
+        ///        MUST CHECK FOR ERRORS!!
         /// </summary>
         private bool IsValidTap(ref ActiveGesture gesture)
         {
             return gesture.TravelDistance <= maxTapDrift &&
-                (gesture.StartTime - gesture.EndTime) <= maxTapDuration;
+                (gesture.EndTime - gesture.StartTime) <= maxTapDuration;
         }
 
         private void OnPressed(PointerInput input, double time)
@@ -96,11 +138,21 @@ namespace Core.Gestures
             Debug.Assert(!activeGestures.ContainsKey(input.InputId));
 
             var newGesture = new ActiveGesture(input.InputId, input.Position, time);
+
             activeGestures.Add(input.InputId, newGesture);
 
             DebugInfo(newGesture);
 
             Pressed?.Invoke(new SwipeInput(newGesture));
+        }
+
+        private void OnDragStarted(ActiveGesture gesture, double time)
+        {
+            gesture.IsDragged = true;
+
+            DebugInfo(gesture);
+
+            DragStarted?.Invoke(new SwipeInput(gesture));
         }
 
         private void OnDragged(PointerInput input, double time)
@@ -113,10 +165,22 @@ namespace Core.Gestures
 
             existingGesture.SubmitPoint(input.Position, time);
 
+            if (existingGesture.TravelDistance < maxTapDrift)
+            {
+                return;
+            }
+
+            if (!existingGesture.IsDragged)
+            {
+                OnDragStarted(existingGesture, time);
+            }
+
             if (IsValidSwipe(ref existingGesture))
             {
                 PotentiallySwiped?.Invoke(new SwipeInput(existingGesture));
             }
+            
+            Dragged?.Invoke(new DragInput(existingGesture));
 
             DebugInfo(existingGesture);
         }
@@ -128,20 +192,29 @@ namespace Core.Gestures
                 // Probably caught by UI, or the input was otherwise lost
                 return;
             }
-
             activeGestures.Remove(input.InputId);
             existingGesture.SubmitPoint(input.Position, time);
 
+            existingGesture.IsDragged = false;
+
+            var swipeOrTap = false;
             if (IsValidSwipe(ref existingGesture))
             {
                 Swiped?.Invoke(new SwipeInput(existingGesture));
+                swipeOrTap = true;
             }
 
             if (IsValidTap(ref existingGesture))
             {
                 Tapped?.Invoke(new TapInput(existingGesture));
+                swipeOrTap = true;
             }
 
+            if (!swipeOrTap)
+            {
+                DragFinished?.Invoke(new DragInput(existingGesture));
+            }
+            
             DebugInfo(existingGesture);
         }
 
@@ -174,8 +247,8 @@ namespace Core.Gestures
 
             label.text = builder.ToString();
 
-            var worldStart = Camera.main.ScreenToWorldPoint(gesture.StartPosition);
-            var worldEnd = Camera.main.ScreenToWorldPoint(gesture.EndPosition);
+            var worldStart = camera.ScreenToWorldPoint(gesture.StartPosition);
+            var worldEnd = camera.ScreenToWorldPoint(gesture.EndPosition);
 
             worldStart.z += 5;
             worldEnd.z += 5;

@@ -42,6 +42,8 @@ namespace Core.Gestures
         /// </summary>
         public int Samples;
 
+        public bool IsDragged;
+
         /// <summary>
         /// How consistent the swipe was in its direction. Approaches 1 for straight lines.
         /// </summary>

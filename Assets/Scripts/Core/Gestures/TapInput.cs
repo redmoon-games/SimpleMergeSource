@@ -8,6 +8,10 @@ namespace Core.Gestures
     public struct TapInput
     {
         /// <summary>
+        /// ID of input that performed this swipe.
+        /// </summary>
+        public readonly int InputId;
+        /// <summary>
         /// Position that the tap started.
         /// </summary>
         public readonly Vector2 PressPosition;
@@ -34,6 +38,7 @@ namespace Core.Gestures
 
         internal TapInput(ActiveGesture gesture) : this()
         {
+            InputId = gesture.InputId;
             PressPosition = gesture.StartPosition;
             ReleasePosition = gesture.EndPosition;
             TapDuration = gesture.EndTime - gesture.StartTime;

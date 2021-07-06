@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Game.Services
+namespace Core.Services
 {
     public class OptionService : MonoBehaviour
     {
-        public BoolOption groupCanMove = new BoolOption();
+        public BoolOption canMerge = new BoolOption();
     }
 
     public class BoolOption

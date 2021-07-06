@@ -110,7 +110,8 @@ namespace Core.Drawing
 
         #endif
 
-        [RuntimeInitializeOnLoadMethod]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+
         private static void Register()
         {
             InputSystem.RegisterBindingComposite<PointerInputComposite>();

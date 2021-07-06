@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Utils
 {
@@ -13,14 +12,22 @@ namespace Utils
 
         public static T GetBy<T>(this List<T> list, Func<T, bool> condition, T defaultValue = default)
         {
-            foreach (var icon in list)
+            foreach (var item in list)
             {
-                if (condition(icon))
-                    return icon;
+                if (condition(item))
+                    return item;
             }
-
-            Debug.LogWarning($"{typeof(T)} object is not found");
             return defaultValue;
         }
+        public static List<T> GetListBy<T>(this List<T> list, Func<T, bool> condition, T defaultValue = default)
+        {
+            var result = new List<T>();
+            foreach (var item in list)
+            {
+                if (condition(item)) result.Add(item);
+            }
+            return result;
+        }
+
     }
 }

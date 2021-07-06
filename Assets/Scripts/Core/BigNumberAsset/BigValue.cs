@@ -35,6 +35,25 @@ namespace Core.BigNumberAsset
                 Tier = fixedValues.Tier;
             }
         }
+        
+        public static BigValue Parse(string value)
+        {
+            if (string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(value)) return Zero;
+            for (var i = value.Length - 1; i >= 0; i--)
+            {
+                if (value[i] != '0')
+                {
+                    var numConsecutiveZeroes = value.Length - 1 - i; 
+                    var tier = numConsecutiveZeroes / 3;
+                    var reminder = numConsecutiveZeroes % 3;
+                    return new BigValue(
+                        float.Parse(value.Substring(0, i + 1 + reminder)), 
+                        tier);
+                }
+            }
+
+            return Zero;
+        }
 
         public IBigValue Add(IBigValue other)
         {
@@ -71,7 +90,17 @@ namespace Core.BigNumberAsset
 
         public override string ToString()
         {
-            return $"{Value:0.0} {TierToString()}";
+            return $"{Value:0.0}{TierToString()}";
+        }
+
+        public string ToColorString()
+        {
+            return $"{Value:0.0}<color=#FFD925>{TierToString()}";
+        }
+
+        public string ToColorString(string hexColor)
+        {
+            return $"{Value:0.0}<color={hexColor}>{TierToString()}";
         }
 
         public IBigValue Clone()

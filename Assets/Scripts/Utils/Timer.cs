@@ -7,7 +7,7 @@ namespace Utils
     {
         public bool AutoReset = false;
         public Action onTimerFinished = () => {};
-        public bool IsTimerFinished => _timer <= 0f;
+        public bool IsTimerFinished { get; private set; }
         public float TimerFillAmount => 1f - _timer / _timerInitValue;
         
         private float _timerInitValue = -1f;
@@ -33,6 +33,7 @@ namespace Utils
             _timerInitValue = initTime;
             _useRange = false;
             Reset();
+            IsTimerFinished = false;
         }
         
         public void Init(FloatRange initTimeRange)
@@ -40,6 +41,7 @@ namespace Utils
             _timerInitRange = initTimeRange;
             _useRange = true;
             ResetRange();
+            IsTimerFinished = false;
         }
 
         public void DeInit()
@@ -58,6 +60,7 @@ namespace Utils
             else
             {
                 _timer = _timerInitValue;
+                IsTimerFinished = false;
             }
         }
         
@@ -68,6 +71,8 @@ namespace Utils
                 _timerInitValue = Random.Range(_timerInitRange.min, _timerInitRange.max);
                 _timer = _timerInitValue;
             }
+
+            IsTimerFinished = false;
         }
         
         public void ResetRange(FloatRange newRange)
@@ -83,8 +88,9 @@ namespace Utils
         public void Update(float deltaTime)
         {
             _timer -= deltaTime;
-            if (_timer <= 0)
+            if (_timer <= 0 && !IsTimerFinished)
             {
+                IsTimerFinished = true;
                 _timer = 0;
                 onTimerFinished.Invoke();
                 if (AutoReset)
